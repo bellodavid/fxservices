@@ -48,10 +48,31 @@ export const FOREX_SOURCES = {
   FX_API: "https://api.fxapi.com/v1/latest"
 };
 
+// Define allowed origins for different environments
+const ALLOWED_ORIGINS = {
+  development: ["http://localhost:3001"],
+  production: [
+    process.env.FRONTEND_URL || "http://localhost:3001",
+    "https://app.stg.bananacrystal.com"
+  ]
+};
+
 export const CORS_CONFIG = {
-  origin: config.nodeEnv === "production" 
-    ? process.env.FRONTEND_URL || "http://localhost:3001"
-    : "http://localhost:3001",
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean | string | string[]) => void) => {
+    // Allow requests with no origin (like mobile apps, curl requests, etc.)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    const allowedOrigins = ALLOWED_ORIGINS[config.nodeEnv as keyof typeof ALLOWED_ORIGINS] || ALLOWED_ORIGINS.development;
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      console.warn(`Origin ${origin} not allowed by CORS`);
+      callback(null, false);
+    }
+  },
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Accept"],
   credentials: true,
