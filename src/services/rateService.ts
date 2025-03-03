@@ -233,18 +233,32 @@ export class RateService {
       ) / bananaCrystalRates.length
     );
 
+    const bananaCrystalConfidence = calculateConfidenceScore(
+      standardDeviation,
+      bananaCrystalAvg
+    );
+
+    // Calculate margin factor based on confidence and a default volatility
+    const volatilityFactor = 0.01; // Default volatility
+    const confidenceFactor = Math.max(0, (100 - bananaCrystalConfidence) / 1000);
+    let marginFactor = 0.005; // Base margin
+    marginFactor += volatilityFactor + confidenceFactor;
+    marginFactor = Math.max(0.01, Math.min(0.05, marginFactor));
+
+    const buyRate = formatRate(avgBuyRate * (1 - marginFactor));
+    const sellRate = formatRate(avgSellRate * (1 + marginFactor));
+    const adjustedSpread = formatRate(sellRate - buyRate);
+    const adjustedSpreadPercentage = formatRate((adjustedSpread / buyRate) * 100);
+
     return {
       fromCurrency,
       toCurrency,
-      buyRate: avgBuyRate,
-      sellRate: avgSellRate,
-      spread,
-      spreadPercentage,
+      buyRate: buyRate,
+      sellRate: sellRate,
+      spread: adjustedSpread,
+      spreadPercentage: adjustedSpreadPercentage,
       bananaCrystalRate: bananaCrystalAvg,
-      bananaCrystalConfidence: calculateConfidenceScore(
-        standardDeviation,
-        bananaCrystalAvg
-      ),
+      bananaCrystalConfidence: bananaCrystalConfidence,
       metadata: {
         sourcesUsed: cleanedRates.map((r) => r.source),
         timestamp: Date.now(),
@@ -472,7 +486,7 @@ export class RateService {
           }
 
           // Cap the margin at reasonable levels (0.5% to 3%)
-          marginFactor = Math.max(0.005, Math.min(0.03, marginFactor));
+          marginFactor = Math.max(0.01, Math.min(0.05, marginFactor));
 
           // Calculate recommended buy and sell rates
           // For some currencies, the buy rate might be higher than sell rate in the market
@@ -481,9 +495,12 @@ export class RateService {
           const recommendedBuyRate = formatRate(midRate * (1 - marginFactor));
           const recommendedSellRate = formatRate(midRate * (1 + marginFactor));
 
+          const buyRate = formatRate(rate.buyRate * (1 - marginFactor));
+          const sellRate = formatRate(rate.sellRate * (1 + marginFactor));
+
           bananaCrystalRates[currency] = {
-            buyRate: rate.buyRate,
-            sellRate: rate.sellRate,
+            buyRate: buyRate,
+            sellRate: sellRate,
             confidence: bananaCrystalRate.confidence,
             volatilityIndex: bananaCrystalRate.volatilityIndex,
             recommendedBuyRate,

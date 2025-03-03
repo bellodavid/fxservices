@@ -16,7 +16,7 @@ export const MAJOR_CURRENCIES = [
 export const BASE_CURRENCY = "USD";
 
 export const SPREAD_CONFIG = {
-  DEFAULT_SPREAD_PIPS: 2.5,
+  DEFAULT_SPREAD_PIPS: 25,
   MAX_ALLOWED_SPREAD_PIPS: 10,
 };
 
