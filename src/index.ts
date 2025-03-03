@@ -9,24 +9,11 @@ import routes from "./routes";
 const app = express();
 const port = config.port;
 
-// Use the cors middleware with specific configuration
-app.use(cors({
-  origin: "https://app.stg.bananacrystal.com",
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
-  credentials: true
-}));
+// Apply CORS middleware with configuration
+app.use(cors(CORS_CONFIG));
 
 // Standard middleware
 app.use(express.json());
-
-// Handle preflight OPTIONS requests explicitly
-app.options('*', cors({
-  origin: "https://app.stg.bananacrystal.com",
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
-  credentials: true
-}));
 
 // Routes
 app.use("/api", routes);
@@ -77,7 +64,6 @@ try {
     console.log(`Forex rate aggregator running on port ${port}`);
     try {
       // Perform initial update when server starts
-      console.log("Performing initial rate update...");
       await updateAllRates();
       console.log("Initial rate update completed successfully");
     } catch (error) {
